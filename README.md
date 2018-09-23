@@ -1,1 +1,1 @@
-# HTTP/2 Experiments with Netty ~Rukshani~
+# HTTP/2 Experiments with Netty ~Rukshani
