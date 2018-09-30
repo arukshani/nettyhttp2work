@@ -44,7 +44,7 @@ public class Http2ChannelInitializer extends ChannelInitializer<SocketChannel> {
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
-        boolean isSSL = true;
+        boolean isSSL = false;
         if (isSSL) {
             configureSsl(ch);
         } else {
