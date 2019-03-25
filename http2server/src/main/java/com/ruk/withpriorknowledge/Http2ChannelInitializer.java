@@ -25,13 +25,26 @@ import io.netty.handler.ssl.util.SelfSignedCertificate;
 import io.netty.util.AsciiString;
 import io.netty.util.ReferenceCountUtil;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.security.KeyStore;
 import java.security.cert.CertificateException;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLException;
+
 
 /**
  * Created by rukshani on 9/22/18.
  */
 public class Http2ChannelInitializer extends ChannelInitializer<SocketChannel> {
+
+    public static final String KEYSTORE = "/home/rukshani/BallerinaWork/PERF_BAL/ballerinaKeystore.p12";
+    //    private static final String KEYSTORE_TYPE = "JKS";
+    public static final String KEYSTORE_TYPE = "PKCS12";
+    //    private static final String KEYSTORE_PASSWORD = "123456";
+//    private static final String CERT_PASSWORD = "123456";
+    public static final String KEYSTORE_PASSWORD = "ballerina";
+    public static final String CERT_PASSWORD = "ballerina";
 
     private static final HttpServerUpgradeHandler.UpgradeCodecFactory upgradeCodecFactory =
             protocol -> {
@@ -44,7 +57,7 @@ public class Http2ChannelInitializer extends ChannelInitializer<SocketChannel> {
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
-        boolean isSSL = false;
+        boolean isSSL = true;
         if (isSSL) {
             configureSsl(ch);
         } else {
@@ -66,7 +79,7 @@ public class Http2ChannelInitializer extends ChannelInitializer<SocketChannel> {
         final HttpServerUpgradeHandler upgradeHandler = new HttpServerUpgradeHandler(sourceCodec, upgradeCodecFactory);
         final CleartextHttp2ServerUpgradeHandler cleartextHttp2ServerUpgradeHandler =
                 new CleartextHttp2ServerUpgradeHandler(sourceCodec, upgradeHandler,
-                        new HelloWorldHttp2HandlerBuilder().build());
+                                                       new HelloWorldHttp2HandlerBuilder().build());
 
         pipeline.addLast(cleartextHttp2ServerUpgradeHandler);
         pipeline.addLast(new SimpleChannelInboundHandler<HttpMessage>() {
@@ -104,31 +117,42 @@ public class Http2ChannelInitializer extends ChannelInitializer<SocketChannel> {
     }
 
     //This is just for testing purpose
-    private SslContext configureSSL() throws SSLException, CertificateException {
+    private SslContext configureSSL()
+            throws SSLException, CertificateException {
         // Configure SSL.
-        final SslContext sslCtx;
-        boolean SSL = true;
-        if (SSL) {
-            SslProvider provider = OpenSsl.isAlpnSupported() ? SslProvider.OPENSSL : SslProvider.JDK;
-            System.out.println("OpenSsl.isAlpnSupported():" + OpenSsl.isAlpnSupported());
-            SelfSignedCertificate ssc = new SelfSignedCertificate();
-            sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey())
-                    .sslProvider(provider)
-                /* NOTE: the cipher filter may not include all ciphers required by the HTTP/2 specification.
-                 * Please refer to the HTTP/2 specification for cipher requirements. */
-                    .ciphers(Http2SecurityUtil.CIPHERS, SupportedCipherSuiteFilter.INSTANCE)
-                    .applicationProtocolConfig(new ApplicationProtocolConfig(
-                            ApplicationProtocolConfig.Protocol.ALPN,
-                            // NO_ADVERTISE is currently the only mode supported by both OpenSsl and JDK providers.
-                            ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
-                            // ACCEPT is currently the only mode supported by both OpenSsl and JDK providers.
-                            ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
-                            ApplicationProtocolNames.HTTP_2,
-                            ApplicationProtocolNames.HTTP_1_1))
-                    .build();
-        } else {
-            sslCtx = null;
+        SslContext sslCtx = null;
+        try {
+
+            boolean SSL = true;
+            if (SSL) {
+                KeyStore ks = KeyStore.getInstance(KEYSTORE_TYPE);
+                ks.load(new FileInputStream(new File(KEYSTORE)), KEYSTORE_PASSWORD.toCharArray());
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+                kmf.init(ks, CERT_PASSWORD.toCharArray());
+                SslProvider provider = OpenSsl.isAlpnSupported() ? SslProvider.OPENSSL : SslProvider.JDK;
+                System.out.println("OpenSsl.isAlpnSupported():" + OpenSsl.isAlpnSupported());
+                SelfSignedCertificate ssc = new SelfSignedCertificate();
+                sslCtx = SslContextBuilder.forServer(kmf)
+                        .sslProvider(provider)
+                        /* NOTE: the cipher filter may not include all ciphers required by the HTTP/2 specification.
+                         * Please refer to the HTTP/2 specification for cipher requirements. */
+                        .ciphers(Http2SecurityUtil.CIPHERS, SupportedCipherSuiteFilter.INSTANCE)
+                        .applicationProtocolConfig(new ApplicationProtocolConfig(
+                                ApplicationProtocolConfig.Protocol.ALPN,
+                                // NO_ADVERTISE is currently the only mode supported by both OpenSsl and JDK providers.
+                                ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
+                                // ACCEPT is currently the only mode supported by both OpenSsl and JDK providers.
+                                ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
+                                ApplicationProtocolNames.HTTP_2,
+                                ApplicationProtocolNames.HTTP_1_1))
+                        .build();
+            } else {
+                sslCtx = null;
+            }
+        } catch (Exception e) {
+
         }
+
 
         return sslCtx;
     }
@@ -147,9 +171,9 @@ public class Http2ChannelInitializer extends ChannelInitializer<SocketChannel> {
         boolean SSL = true;
         if (SSL) {
             SelfSignedCertificate ssc = new SelfSignedCertificate();
-           sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey())
-                /* NOTE: the cipher filter may not include all ciphers required by the HTTP/2 specification.
-                 * Please refer to the HTTP/2 specification for cipher requirements. */
+            sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey())
+                    /* NOTE: the cipher filter may not include all ciphers required by the HTTP/2 specification.
+                     * Please refer to the HTTP/2 specification for cipher requirements. */
                     .ciphers(Http2SecurityUtil.CIPHERS, SupportedCipherSuiteFilter.INSTANCE)
                     .applicationProtocolConfig(new ApplicationProtocolConfig(
                             ApplicationProtocolConfig.Protocol.ALPN,

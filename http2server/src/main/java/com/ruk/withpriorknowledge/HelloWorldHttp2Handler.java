@@ -97,6 +97,7 @@ public final class HelloWorldHttp2Handler extends Http2ConnectionHandler impleme
     @Override
     public int onDataRead(ChannelHandlerContext ctx, int streamId, ByteBuf data, int padding, boolean endOfStream) {
         int processed = data.readableBytes() + padding;
+        data.clear();
         if (endOfStream) {
             sendResponse(ctx, streamId, data.retain());
         }

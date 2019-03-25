@@ -33,7 +33,7 @@ public class Http2Server {
         EventLoopGroup group = new NioEventLoopGroup();
 
         // Load the certificates and initiate the SSL Context
-        SSLHandlerProvider.initSSLContext();
+//        SSLHandlerProvider.initSSLContext();
 
         try {
             ServerBootstrap b = new ServerBootstrap();

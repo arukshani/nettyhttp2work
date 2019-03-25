@@ -2,6 +2,7 @@ package com.ruk.withpriorknowledge;
 
 import io.netty.handler.ssl.SslHandler;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +23,8 @@ import javax.net.ssl.TrustManager;
 public class SSLHandlerProvider {
 
 
-    // keytool  -genkey -noprompt -trustcacerts -keyalg RSA -alias cert -dname  maanadev.org -keypass 123456 -keystore mysslstore.jks -storepass 123456 -dname CN=maanadev.org
+    // keytool  -genkey -noprompt -trustcacerts -keyalg RSA -alias cert -dname  maanadev.org -keypass 123456
+    // -keystore mysslstore.jks -storepass 123456 -dname CN=maanadev.org
     //keytool -export -keystore mysslstore.jks -alias cert -file maanadev.org.cert
     //Move the maanadev.org.cert to /etc/ssl/certs/ directory
     //curl https://localhost:9090 -k
@@ -30,10 +32,14 @@ public class SSLHandlerProvider {
     private static final String PROTOCOL = "TLS";
     private static final String ALGORITHM_SUN_X509 = "SunX509";
     private static final String ALGORITHM = "ssl.KeyManagerFactory.algorithm";
-    private static final String KEYSTORE = "ssl_certs/mysslstore.jks";
-    private static final String KEYSTORE_TYPE = "JKS";
-    private static final String KEYSTORE_PASSWORD = "123456";
-    private static final String CERT_PASSWORD = "123456";
+    //    private static final String KEYSTORE = "ssl_certs/mysslstore.jks";
+    public static final String KEYSTORE = "/home/rukshani/BallerinaWork/PERF_BAL/ballerinaKeystore.p12";
+    //    private static final String KEYSTORE_TYPE = "JKS";
+    public static final String KEYSTORE_TYPE = "PKCS12";
+    //    private static final String KEYSTORE_PASSWORD = "123456";
+//    private static final String CERT_PASSWORD = "123456";
+    public static final String KEYSTORE_PASSWORD = "ballerina";
+    public static final String CERT_PASSWORD = "ballerina";
     private static SSLContext serverSSLContext = null;
 
     public static SslHandler getSSLHandler() {
@@ -60,7 +66,9 @@ public class SSLHandlerProvider {
         KeyStore ks = null;
         InputStream inputStream = null;
         try {
-            inputStream = new FileInputStream(SSLHandlerProvider.class.getClassLoader().getResource(KEYSTORE).getFile());
+            /*inputStream = new FileInputStream(
+                    SSLHandlerProvider.class.getClassLoader().getResource(KEYSTORE).getFile());*/
+            inputStream = new FileInputStream(new File(KEYSTORE));
             ks = KeyStore.getInstance(KEYSTORE_TYPE);
             ks.load(inputStream, KEYSTORE_PASSWORD.toCharArray());
         } catch (IOException e) {
