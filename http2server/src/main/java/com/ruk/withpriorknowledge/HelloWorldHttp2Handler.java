@@ -99,7 +99,7 @@ public final class HelloWorldHttp2Handler extends Http2ConnectionHandler impleme
         int processed = data.readableBytes() + padding;
         data.clear();
         if (endOfStream) {
-            sendResponse(ctx, streamId, data.retain());
+            sendResponse(ctx, streamId, getResponseByteBuf(ctx));
         }
         return processed;
     }
@@ -108,11 +108,16 @@ public final class HelloWorldHttp2Handler extends Http2ConnectionHandler impleme
     public void onHeadersRead(ChannelHandlerContext ctx, int streamId,
                               Http2Headers headers, int padding, boolean endOfStream) {
         if (endOfStream) {
-            ByteBuf content = ctx.alloc().buffer();
-            content.writeBytes(RESPONSE_BYTES.duplicate());
-            ByteBufUtil.writeAscii(content, " - via HTTP/2");
+            ByteBuf content = getResponseByteBuf(ctx);
             sendResponse(ctx, streamId, content);
         }
+    }
+
+    private ByteBuf getResponseByteBuf(ChannelHandlerContext ctx) {
+        ByteBuf content = ctx.alloc().buffer();
+        content.writeBytes(RESPONSE_BYTES.duplicate());
+        ByteBufUtil.writeAscii(content, " - via HTTP/2");
+        return content;
     }
 
     @Override

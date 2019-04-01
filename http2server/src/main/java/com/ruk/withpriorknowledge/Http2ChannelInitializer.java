@@ -150,10 +150,8 @@ public class Http2ChannelInitializer extends ChannelInitializer<SocketChannel> {
                 sslCtx = null;
             }
         } catch (Exception e) {
-
+            System.out.println(e.getMessage());
         }
-
-
         return sslCtx;
     }
 
